@@ -4,6 +4,8 @@ import readline from "node:readline";
 import process from "node:process";
 
 export class Jaksel {
+    private errorReporter: ErrorReporter
+
     constructor() {
         this.errorReporter = new ErrorReporter();
     }
@@ -13,7 +15,7 @@ export class Jaksel {
             console.log("Usage: node jaksel.js [script]");
             exit(64);
         } else if (argv.length === 3) {
-            this.runFile(argv[2]);
+            this.runFile(argv[2]!);
         } else {
             this.runPrompt();
         }
@@ -21,16 +23,16 @@ export class Jaksel {
 
     /**
      * 
-     * @param {path} path relative path from where you execute the interpreter
+     * @param {string} path relative path from where you execute the interpreter
      */
-    runFile(path) {
+    runFile(path: string) {
         try {
             const code = fs.readFileSync(path, "utf-8");
             this.run(code);
             if (this.errorReporter.hadError) exit(65);
             if (this.errorReporter.hadRuntimeError) exit(70);
         } catch (err) {
-            if (err?.code == "ENOENT") {
+            if (typeof err === 'object' && err !== null && "code" in err && err.code == "ENOENT") {
                 console.error(`Error: ${path} doesn't exist.`);
             } else {
                 console.error(err);
@@ -53,11 +55,7 @@ export class Jaksel {
         });
     }
 
-    /**
-     *
-     * @param {string} source
-     */
-    run(source) {
+    run(source: string) {
         const scanner = new Scanner(source, this.errorReporter);
         const tokens = scanner.scanTokens();
         const parser = new Parser(tokens, this.errorReporter);
@@ -72,13 +70,9 @@ export class ErrorReporter {
     hadError = false;
     hadRuntimeError = false;
 
-    /**
-     *
-     * @param {number} line
-     * @param {number|string} columnOrMessage
-     * @param {string} [message]
-     */
-    error(line, columnOrMessage, message) {
+    error(line: number, message: string): void
+    error(line: number, column: number, message: string): void
+    error(line: number, columnOrMessage: number|string, message?: string): void {
         if (typeof columnOrMessage === 'string') {
             this.#report(line, null, "", columnOrMessage);
         } else {
@@ -86,12 +80,7 @@ export class ErrorReporter {
         }
     }
 
-    /**
-     * 
-     * @param {Token} token 
-     * @param {string} message 
-     */
-    parseError(token, message) {
+    parseError(token: Token, message: string) {
         if (token.type === TokenType.EOF) {
             this.error(token.line, message);
         } else {
@@ -99,14 +88,7 @@ export class ErrorReporter {
         }
     }
 
-    /**
-     * 
-     * @param {number} line 
-     * @param {number} column
-     * @param {string} where
-     * @param {string} message 
-     */
-    #report(line, column, where, message) {
+    #report(line: number, column: number|null, where: string, message?: string) {
         if (column === null) {
             console.error(`[line ${line}] Error ${where}: ${message}`);
         } else {
@@ -115,63 +97,64 @@ export class ErrorReporter {
         this.hadError = true;
     }
 
-    runtimeError(error) {
+    runtimeError(error: RuntimeError) {
         console.error(`${error.message}\n[line ${error.token.line}]`);
         this.hadRuntimeError = true;
     }
 }
 
-/**
- * @namespace
- */
-const TokenType = Object.freeze({
+enum TokenType {
     // Single-character tokens.
-    LEFT_PAREN: "LEFT_PAREN",
-    RIGHT_PAREN: "RIGHT_PAREN",
-    COMMA: "COMMA",
-    DOT: "DOT",
-    MINUS: "MINUS",
-    PLUS: "PLUS",
-    SLASH: "SLASH",
-    STAR: "STAR",
-    PERCENT: "PERCENT",
-    NEWLINE: "NEWLINE",
+    LEFT_PAREN,
+    RIGHT_PAREN,
+    COMMA,
+    DOT,
+    MINUS,
+    PLUS,
+    SLASH,
+    STAR,
+    PERCENT,
+    NEWLINE,
 
     // One or two character tokens.
-    BANG: "BANG",
-    BANG_EQUAL: "BANG_EQUAL",
-    EQUAL: "EQUAL",
-    EQUAL_EQUAL: "EQUAL_EQUAL",
-    GREATER: "GREATER",
-    GREATER_EQUAL: "GREATER_EQUAL",
-    LESS: "LESS",
-    LESS_EQUAL: "LESS_EQUAL",
+    BANG,
+    BANG_EQUAL,
+    EQUAL,
+    EQUAL_EQUAL,
+    GREATER,
+    GREATER_EQUAL,
+    LESS,
+    LESS_EQUAL,
 
     // Literals.
-    IDENTIFIER: "IDENTIFIER",
-    STRING: "STRING",
-    NUMBER: "NUMBER",
-    EOF: 'EOF',
+    IDENTIFIER,
+    STRING,
+    NUMBER,
+    EOF,
 
-    FOMO: 'FOMO',
-    ENDUP: 'ENDUP',
+    TRUE,
+    FALSE,
+    NIL,
 
-    THATS: 'THATS',
-    IT: 'IT',
-    SIH: 'SIH',
+    FOMO,
+    ENDUP,
 
-    SPILL: 'SPILL',
+    THATS,
+    IT,
+    SIH,
 
-    LITERALLY: 'LITERALLY',
-    SERIOUSLY: 'SERIOUSLY',
-    WHICHIS: 'WHICHIS',
-    ITU: 'ITU',
+    SPILL,
 
-    SO: 'SO',
-    ABOUT: 'ABOUT',
-    OVERTHINKING: 'OVERTHINKING',
-    CALL: 'CALL',
-});
+    LITERALLY,
+    SERIOUSLY,
+    WHICHIS,
+    ITU,
+
+    SO,
+    ABOUT,
+    OVERTHINKING,
+    CALL,
+};
 
 const Keywords = new Map([
     ['fomo', TokenType.FOMO],
@@ -191,14 +174,12 @@ const Keywords = new Map([
 ])
 
 class Token {
-    /**
-     *
-     * @param {TokenType} type
-     * @param {string} lexeme
-     * @param {string} literal
-     * @param {number} line
-     */
-    constructor(type, lexeme, literal, line) {
+
+    type: TokenType
+    lexeme: string
+    literal: string|object|null
+    line: number
+    constructor(type: TokenType, lexeme: string, literal: string|object|null, line: number) {
         this.type = type;
         this.lexeme = lexeme;
         this.literal = literal;
@@ -211,21 +192,15 @@ class Token {
 }
 
 class Scanner {
-    /**
-     * @type {Array<Token>}
-     */
-    tokens = [];
+    tokens: Array<Token> = [];
     start = 0;
     current = 0;
     line = 1;
     column = 0;
+    private source: string;
+    private errorReporter: ErrorReporter
 
-    /**
-     *
-     * @param {string} source
-     * @param {ErrorReporter} errorReporter
-     */
-    constructor(source, errorReporter) {
+    constructor(source: string, errorReporter: ErrorReporter) {
         this.source = source;
         this.errorReporter = errorReporter;
     }
@@ -324,7 +299,7 @@ class Scanner {
         this.#addToken(type);
     }
 
-    #string(quote) {
+    #string(quote: string) {
         while (this.#peek() !== quote && !this.#isAtEnd()) {
             if (this.#peek() === "\n") this.line++;
             this.#advance();
@@ -340,7 +315,7 @@ class Scanner {
         this.#addToken(TokenType.STRING, value);
     }
 
-    #match(expected) {
+    #match(expected: string) {
         if (this.#isAtEnd()) return false;
         if (this.source.charAt(this.current) != expected) return false;
 
@@ -360,30 +335,15 @@ class Scanner {
         return this.source.charAt(this.current + 1);
     }
 
-    /**
-     * 
-     * @param {string} c 
-     * @returns 
-     */
-    #isAlpha(c) {
+    #isAlpha(c: string): boolean {
         return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c == '_');
     }
 
-    /**
-     * 
-     * @param {string} c 
-     * @returns 
-     */
-    #isAlphaNumeric(c) {
+    #isAlphaNumeric(c: string) {
         return this.#isAlpha(c) || this.#isDigit(c);
     }
 
-    /**
-     * 
-     * @param {string} c 
-     * @returns 
-     */
-    #isDigit(c) {
+    #isDigit(c: string) {
         return c >= '0' && c <= '9';
     }
 
@@ -411,24 +371,18 @@ class Scanner {
         return c;
     }
 
-    /**
-     *
-     * @param {TokenType} type
-     * @param {object} [literal]
-     */
-    #addToken(type, literal = null) {
+    #addToken(type: TokenType, literal: any = null) {
         const text = this.source.substring(this.start, this.current);
         this.tokens.push(new Token(type, text, literal, this.line));
     }
 }
 
 class Parser {
-    /**
-     * 
-     * @param {Array<Token>} tokens 
-     * @param {ErrorReporter} errorReporter
-     */
-    constructor(tokens, errorReporter) {
+    private tokens: Array<Token>;
+    private current: number;
+    private errorReporter: ErrorReporter;
+
+    constructor(tokens: Array<Token>, errorReporter: ErrorReporter) {
         this.tokens = tokens;
         this.current = 0;
         this.errorReporter = errorReporter;
@@ -467,7 +421,7 @@ class Parser {
         return new StmtExpr(expr);
     }
 
-    #expression() {
+    #expression(): any {
         return this.#equality();
     }
 
@@ -513,7 +467,7 @@ class Parser {
         return expr;
     }
 
-    #unary() {
+    #unary(): any {
         if (this.#match(TokenType.BANG, TokenType.MINUS)) {
             const operator = this.#previous();
             const right = this.#unary();
@@ -537,7 +491,7 @@ class Parser {
         throw this.#error(this.#peek(), "Expect expression.");
     }
 
-    #match(...types) {
+    #match(...types: TokenType[]) {
         for (const type of types) {
             if (this.#check(type)) {
                 this.#advance();
@@ -547,17 +501,11 @@ class Parser {
         return false;
     }
 
-    /**
-     * 
-     * @param {Array<TokenType>|TokenType} type 
-     * @param {string} message 
-     * @returns 
-     */
-    #consume(type, message) {
+    #consume(type: TokenType, message: string) {
         if (this.#check(type)) return this.#advance();
         throw this.#error(this.#peek(), message);
     }
-    #check(type) {
+    #check(type: TokenType) {
         if (this.#isAtEnd()) return false;
         return this.#peek().type === type;
     }
@@ -571,14 +519,15 @@ class Parser {
         return this.#peek().type === TokenType.EOF;
     }
 
-    #peek() {
-        return this.tokens[this.current];
+    #peek(): Token {
+        return this.tokens[this.current]!;
     }
 
-    #previous() {
-        return this.tokens[this.current - 1];
+    #previous(): Token {
+        return this.tokens[this.current - 1]!;
     }
-    #error(token, message) {
+
+    #error(token: Token, message: string) {
         this.errorReporter.parseError(token, message);
         return new Error(message);
     }
@@ -605,68 +554,99 @@ class Parser {
     }
 }
 
+class Visitor {
+    visitBinary(expr: ExprBinary) {
+		throw new Error('Method visitBinary not implemented yet.')
+    }
+
+    visitAssign(expr: ExprAssign) {
+		throw new Error('Method visitAssign not implemented yet.')
+    }
+
+	visitCall(expr: ExprCall) {
+		throw new Error('Method visitCall not implemented yet.')
+	}
+    
+	visitGrouping(expr: ExprGrouping) {
+		throw new Error('Method visitGrouping not implemented yet.')
+	}
+    
+	visitLiteral(expr: ExprLiteral) {
+		throw new Error('Method visitLiteral not implemented yet.')
+	}
+
+	visitLogical(expr: ExprLogical) {
+		throw new Error('Method visitLogical not implemented yet.')
+	}
+
+	visitUnary(expr: ExprUnary) {
+		throw new Error('Method visitUnary not implemented yet.')
+	}
+
+	visitVariable(expr: ExprVariable) {
+		throw new Error('Method visitVariable not implemented yet.')
+	}
+
+    visitExpression(stmt: StmtExpr) {
+        throw new Error('Method visitExpression not implemented yet.')
+    }
+
+    visitSpill(stmt: StmtSpill) {
+        throw new Error('Method visitSpill not implemented yet.')
+    }
+}
+
+
 class Interpreter extends Visitor {
-    /**
-     * 
-     * @param {ErrorReporter} errorReporter 
-     */
-    constructor(errorReporter) {
+    private errorReporter: ErrorReporter;
+
+    constructor(errorReporter: ErrorReporter) {
         super();
         this.errorReporter = errorReporter;
     }
 
-    /**
-     * 
-     * @param {Array<Stmt>} statements 
-     */
-    interpret(statements) {
+    interpret(statements: Array<Stmt>) {
         try {
             for (const statement of statements) {
                 this.#execute(statement);
             }
         } catch (err) {
-            this.errorReporter.runtimeError(err);
+            if (err instanceof RuntimeError)
+                this.errorReporter.runtimeError(err);
+            else throw err;
         }
     }
-    /**
-     * 
-     * @param {Expr} expr 
-     */
-    #evaluate(expr) {
+
+    #evaluate(expr: Expr) {
         return expr.accept(this);
     }
-    #execute(stmt) {
+
+    #execute(stmt: Stmt) {
         stmt.accept(this);
     }
-    visitExpression(expr) {
+
+    override visitExpression(expr: StmtExpr) {
         return this.#evaluate(expr.expr);
     }
-    visitSpill(expr) {
+
+    override visitSpill(expr: StmtSpill) {
         const value = this.#evaluate(expr.expr);
         console.log(value);
         return value;
     }
-    /**
-     * @override
-     * @param {ExprLiteral} expr 
-     */
-    visitLiteral(expr) {
+
+    override visitLiteral(expr: ExprLiteral) {
         return expr.value;
     }
 
     /**
      * @override
-     * @param {ExprGrouping} expr 
      */
-    visitGrouping(expr) {
+    override visitGrouping(expr: ExprGrouping) {
         return this.#evaluate(expr.expr);
     }
 
-    /**
-     * @override
-     * @param {ExprUnary} expr 
-     */
-    visitUnary(expr) {
+    override visitUnary(expr: ExprUnary) {
         const right = this.#evaluate(expr.right);
         switch (expr.operator.type) {
             case TokenType.MINUS:
@@ -679,22 +659,19 @@ class Interpreter extends Visitor {
         return null;
     }
 
-    #checkNumberOperand(operator, operand) {
+    #checkNumberOperand(operator: Token, operand) {
         if (typeof operand === 'number') return;
         throw new RuntimeError(operator, "Operand must be a number.");
     }
 
-    #isTruthy(value) {
+    #isTruthy(value: any) {
         if (value === null) return false;
         if (typeof value === 'boolean') return value;
         return true;
     }
 
-    /**
-     * @override
-     * @param {ExprBinary} expr 
-     */
-    visitBinary(expr) {
+    
+    override visitBinary(expr: ExprBinary) {
         const left = this.#evaluate(expr.left);
         const right = this.#evaluate(expr.right);
         switch (expr.operator.type) {
@@ -722,7 +699,6 @@ class Interpreter extends Visitor {
                     return left + right;
                 }
                 throw new RuntimeError(expr.operator, "Operands must be two numbers or two strings.");
-                break;
             case TokenType.PERCENT:
                 return parseFloat(left) % parseFloat(right);
             case TokenType.BANG_EQUAL:
@@ -740,32 +716,27 @@ class Interpreter extends Visitor {
 }
 
 class AstPrinter extends Visitor {
-    /**
-     * 
-     * @param {Expr} expr 
-     * @returns 
-     */
-    print(expr) {
+    print(expr: Expr) {
         return expr.accept(this);
     }
 
-    visitBinary(expr) {
+    override visitBinary(expr: ExprBinary) {
         return this.#parenthesize(expr.operator.lexeme, expr.left, expr.right);
     }
 
-    visitGrouping(expr) {
+    override visitGrouping(expr: ExprGrouping) {
         return this.#parenthesize("group", expr.expr);
     }
 
-    visitLiteral(expr) {
+    override visitLiteral(expr: ExprLiteral) {
         return expr.value.toString();
     }
 
-    visitUnary(expr) {
+    override visitUnary(expr: ExprUnary) {
         return this.#parenthesize(expr.operator.lexeme, expr.right);
     }
 
-    #parenthesize(name, ...exprs) {
+    #parenthesize(name: string, ...exprs: Expr[]) {
         const builder = [];
         builder.push(`(${name}`);
         for (const expr of exprs) {
@@ -778,316 +749,168 @@ class AstPrinter extends Visitor {
 }
 
 class Expr {
-    /**
-     * 
-     * @param {Visitor} visitor 
-     */
-    accept(visitor) {
+    accept(visitor: Visitor) {
         throw new Error('Accept should be implemented.');
     }
 }
 
 class Stmt {
-    /**
-     * 
-     * @param {Visitor} visitor 
-     */
-    accept(visitor) {
+    accept(visitor: Visitor) {
         throw new Error('Accept should be implemented.');
     }
 }
 
-class Visitor {
-    /**
-     * 
-     * @param {ExprBinary} expr 
-     */
-    visitBinary(expr) {
-		throw new Error('Method visitBinary not implemented yet.')
-    }
-    /**
-     * 
-     * @param {ExprAssign} expr 
-     */
-    visitAssign(expr) {
-		throw new Error('Method visitAssign not implemented yet.')
-    }
-    /**
-	 *
-	 * @param {ExprCall} expr
-	 */
-	visitCall(expr) {
-		throw new Error('Method visitCall not implemented yet.')
-	}
-    /**
-	 *
-	 * @param {ExprGrouping} expr
-	 */
-	visitGrouping(expr) {
-		throw new Error('Method visitGrouping not implemented yet.')
-	}
-    /**
-	 *
-	 * @param {ExprLiteral} expr
-	 */
-	visitLiteral(expr) {
-		throw new Error('Method visitLiteral not implemented yet.')
-	}
-    /**
-	 *
-	 * @param {ExprLogical} expr
-	 */
-	visitLogical(expr) {
-		throw new Error('Method visitLogical not implemented yet.')
-	}
-    /**
-	 *
-	 * @param {ExprUnary} expr
-	 */
-	visitUnary(expr) {
-		throw new Error('Method visitUnary not implemented yet.')
-	}
-    /**
-	 *
-	 * @param {ExprVariable} expr
-	 */
-	visitVariable(expr) {
-		throw new Error('Method visitVariable not implemented yet.')
-	}
-    /**
-     * 
-     * @param {StmtExpr} stmt 
-     */
-    visitExpression(stmt) {
-        throw new Error('Method visitExpression not implemented yet.')
-    }
-    /**
-    /**
-     * 
-     * @param {StmtSpill} stmt 
-     */
-    visitSpill(stmt) {
-        throw new Error('Method visitSpill not implemented yet.')
-    }
-}
-
 class ExprBinary extends Expr {
+    left: Expr
+    operator: Token
+    right: Expr
 
-    /**
-     * 
-     * @param {Expr} left 
-     * @param {Token} operator 
-     * @param {Expr} right 
-     */
-    constructor(left, operator, right) {
+    constructor(left: Expr, operator: Token, right: Expr) {
         super();
         this.left = left;
         this.operator = operator;
         this.right = right;
     }
 
-    /**
-     * 
-     * @param {Visitor} visitor 
-     */
-    accept(visitor) {
+    override accept(visitor: Visitor) {
         return visitor.visitBinary(this);
     }
 }
 
 class ExprAssign extends Expr {
-    /**
-     * 
-     * @param {Token} name 
-     * @param {Expr} value 
-     */
-    constructor(name, value) {
+    name: Token
+    value: Expr
+
+    constructor(name: Token, value: Expr) {
         super();
         this.name = name;
         this.value = value;
     }
 
-    /**
-     * 
-     * @param {Visitor} visitor 
-     */
-    accept(visitor) {
+    override accept(visitor: Visitor) {
         return visitor.visitAssign(this);
     }
 }
 
 class ExprCall extends Expr {
-    /**
-     * 
-     * @param {Expr} callee 
-     * @param {Token} parent 
-     * @param {Array} args 
-     * 
-     */
-    constructor(callee, parent, args) {
+    callee: Expr
+    parent: Token
+    arguments: Array<Expr>
+
+    constructor(callee: Expr, parent: Token, args: Array<Expr>) {
         super();
         this.callee = callee;
         this.parent = parent;
         this.arguments = args;
     }
 
-    /**
-     * 
-     * @param {Visitor} visitor 
-     */
-    accept(visitor) {
+    override accept(visitor: Visitor) {
         return visitor.visitCall(this);
     }
 }
 
 
 class ExprGrouping extends Expr {
-    /**
-     * 
-     * @param {Expr} expr 
-     */
-    constructor(expr) {
+    expr: Expr
+
+    constructor(expr: Expr) {
         super();
         this.expr = expr;
     }
 
-    /**
-     * 
-     * @param {Visitor} visitor 
-     */
-    accept(visitor) {
+    override accept(visitor: Visitor) {
         return visitor.visitGrouping(this);
     }
 }
 
 class ExprLiteral extends Expr {
-    /**
-     * 
-     * @param {object} value 
-     */
-    constructor(value) {
+    value: object
+
+    constructor(value: any) {
         super();
         this.value = value;
     }
 
-    /**
-     * 
-     * @param {Visitor} visitor 
-     */
-    accept(visitor) {
+    override accept(visitor: Visitor) {
         return visitor.visitLiteral(this);
     }
 }
 
 class ExprLogical extends Expr {
-    /**
-     * 
-     * @param {Expr} left 
-     * @param {Token} operator 
-     * @param {Expr} right 
-     */
-    constructor(left, operator, right) {
+    left: Expr
+    operator: Token
+    right: Expr
+
+    constructor(left: Expr, operator: Token, right: Expr) {
         super();
         this.left = left;
         this.operator = operator;
         this.right = right;
     }
 
-    /**
-     * 
-     * @param {Visitor} visitor 
-     */
-    accept(visitor) {
+    override accept(visitor: Visitor) {
         return visitor.visitLogical(this);
     }
 }
 
 class ExprUnary extends Expr {
-    /**
-     * 
-     * @param {Token} operator 
-     * @param {Expr} right 
-     */
-    constructor(operator, right) {
+    operator: Token
+    right: Expr
+
+    constructor(operator: Token, right: Expr) {
         super();
         this.operator = operator;
         this.right = right;
     }
 
-    /**
-     * 
-     * @param {Visitor} visitor 
-     */
-    accept(visitor) {
+    override accept(visitor: Visitor) {
         return visitor.visitUnary(this);
     }
 }
 
 class ExprVariable extends Expr {
-    /**
-     * 
-     * @param {Token} name 
-     */
-    constructor(name) {
+    name: Token
+
+    constructor(name: Token) {
         super();
         this.name = name;
     }
 
-    /**
-     * 
-     * @param {Visitor} visitor 
-     */
-    accept(visitor) {
+    override accept(visitor: Visitor) {
         return visitor.visitVariable(this);
     }
 }
 
 class StmtSpill extends Stmt {
+    expr: Expr
 
-    /**
-     * 
-     * @param {Expr} expr 
-     */
-    constructor(expr) {
+    constructor(expr: Expr) {
         super();
         this.expr = expr;
     }
 
-    /**
-     * 
-     * @param {Visitor} visitor 
-     */
-    accept(visitor) {
+    override accept(visitor: Visitor) {
         return visitor.visitSpill(this);
     }
 }
 
 class StmtExpr extends Stmt {
-    /**
-     * 
-     * @param {Expr} expr 
-     */
-    constructor(expr) {
+    expr: Expr
+
+    constructor(expr: Expr) {
         super();
         this.expr = expr;
     }
 
-    /**
-     * 
-     * @param {Visitor} visitor 
-     */
-    accept(visitor) {
+    override accept(visitor: Visitor) {
         return visitor.visitExpression(this);
     }
 }
 
 class RuntimeError extends Error {
-    /**
-     * 
-     * @param {Token} token 
-     * @param {string} message 
-     */
-    constructor(token, message) {
+    token: Token
+
+    constructor(token: Token, message: string) {
         super(message);
         this.token = token;
     }

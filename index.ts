@@ -1,4 +1,4 @@
-import { Jaksel } from "./lib/jaksel.js";
+import { Jaksel } from "./lib/jaksel.ts";
 
 const jaksel = new Jaksel();
 
