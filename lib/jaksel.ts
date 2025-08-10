@@ -554,54 +554,33 @@ class Parser {
     }
 }
 
-class Visitor {
-    visitBinary(expr: ExprBinary) {
-		throw new Error('Method visitBinary not implemented yet.')
-    }
+interface Visitor {
+    visitBinary(expr: ExprBinary): any
 
-    visitAssign(expr: ExprAssign) {
-		throw new Error('Method visitAssign not implemented yet.')
-    }
+    visitAssign(expr: ExprAssign): any
 
-	visitCall(expr: ExprCall) {
-		throw new Error('Method visitCall not implemented yet.')
-	}
+	visitCall(expr: ExprCall): any
     
-	visitGrouping(expr: ExprGrouping) {
-		throw new Error('Method visitGrouping not implemented yet.')
-	}
+	visitGrouping(expr: ExprGrouping): any
     
-	visitLiteral(expr: ExprLiteral) {
-		throw new Error('Method visitLiteral not implemented yet.')
-	}
+	visitLiteral(expr: ExprLiteral): any
 
-	visitLogical(expr: ExprLogical) {
-		throw new Error('Method visitLogical not implemented yet.')
-	}
+	visitLogical(expr: ExprLogical): any
 
-	visitUnary(expr: ExprUnary) {
-		throw new Error('Method visitUnary not implemented yet.')
-	}
+	visitUnary(expr: ExprUnary): any
 
-	visitVariable(expr: ExprVariable) {
-		throw new Error('Method visitVariable not implemented yet.')
-	}
+	visitVariable(expr: ExprVariable): any
 
-    visitExpression(stmt: StmtExpr) {
-        throw new Error('Method visitExpression not implemented yet.')
-    }
+    visitExpression(stmt: StmtExpr): any
 
-    visitSpill(stmt: StmtSpill) {
-        throw new Error('Method visitSpill not implemented yet.')
-    }
+    visitSpill(stmt: StmtSpill): any
 }
 
 
-class Interpreter extends Visitor {
+class Interpreter implements Visitor {
     private errorReporter: ErrorReporter;
 
     constructor(errorReporter: ErrorReporter) {
-        super();
         this.errorReporter = errorReporter;
     }
 
@@ -617,7 +596,7 @@ class Interpreter extends Visitor {
         }
     }
 
-    #evaluate(expr: Expr) {
+    #evaluate(expr: Expr): any {
         return expr.accept(this);
     }
 
@@ -625,28 +604,25 @@ class Interpreter extends Visitor {
         stmt.accept(this);
     }
 
-    override visitExpression(expr: StmtExpr) {
+    visitExpression(expr: StmtExpr) {
         return this.#evaluate(expr.expr);
     }
 
-    override visitSpill(expr: StmtSpill) {
+    visitSpill(expr: StmtSpill) {
         const value = this.#evaluate(expr.expr);
         console.log(value);
         return value;
     }
 
-    override visitLiteral(expr: ExprLiteral) {
+    visitLiteral(expr: ExprLiteral) {
         return expr.value;
     }
 
-    /**
-     * @override
-     */
-    override visitGrouping(expr: ExprGrouping) {
+    visitGrouping(expr: ExprGrouping) {
         return this.#evaluate(expr.expr);
     }
 
-    override visitUnary(expr: ExprUnary) {
+    visitUnary(expr: ExprUnary) {
         const right = this.#evaluate(expr.right);
         switch (expr.operator.type) {
             case TokenType.MINUS:
@@ -659,7 +635,7 @@ class Interpreter extends Visitor {
         return null;
     }
 
-    #checkNumberOperand(operator: Token, operand) {
+    #checkNumberOperand(operator: Token, operand: any) {
         if (typeof operand === 'number') return;
         throw new RuntimeError(operator, "Operand must be a number.");
     }
@@ -671,7 +647,7 @@ class Interpreter extends Visitor {
     }
 
     
-    override visitBinary(expr: ExprBinary) {
+    visitBinary(expr: ExprBinary) {
         const left = this.#evaluate(expr.left);
         const right = this.#evaluate(expr.right);
         switch (expr.operator.type) {
@@ -693,10 +669,10 @@ class Interpreter extends Visitor {
                 return parseFloat(left) * parseFloat(right);
             case TokenType.PLUS:
                 if (typeof left === 'number' && typeof right === 'number') {
-                    return parseFloat(left) + parseFloat(right);
+                    return left + right;
                 }
                 if (typeof left === 'string' && typeof right === 'string') {
-                    return left + right;
+                    return parseFloat(left) + parseFloat(right);
                 }
                 throw new RuntimeError(expr.operator, "Operands must be two numbers or two strings.");
             case TokenType.PERCENT:
@@ -708,32 +684,72 @@ class Interpreter extends Visitor {
         }
     }
 
-    #isEqual(a, b) {
+    visitAssign(expr: ExprAssign) {
+        throw Error('Method not implemented yet');
+    }
+
+    visitCall(expr: ExprCall) {
+        throw Error('Method not implemented yet');
+    }
+
+    visitLogical(expr: ExprLogical) {
+        throw Error('Method not implemented yet');
+    }
+
+    visitVariable(expr: ExprVariable) {
+        throw Error('Method not implemented yet');
+    }
+
+    #isEqual(a: any, b: any) {
         if (a === null && b === null) return true;
         if (a === null) return false;
         return a === b;
     }
 }
 
-class AstPrinter extends Visitor {
+class AstPrinter implements Visitor {
     print(expr: Expr) {
         return expr.accept(this);
     }
 
-    override visitBinary(expr: ExprBinary) {
+    visitBinary(expr: ExprBinary) {
         return this.#parenthesize(expr.operator.lexeme, expr.left, expr.right);
     }
 
-    override visitGrouping(expr: ExprGrouping) {
+    visitGrouping(expr: ExprGrouping) {
         return this.#parenthesize("group", expr.expr);
     }
 
-    override visitLiteral(expr: ExprLiteral) {
+    visitLiteral(expr: ExprLiteral) {
         return expr.value.toString();
     }
 
-    override visitUnary(expr: ExprUnary) {
+    visitUnary(expr: ExprUnary) {
         return this.#parenthesize(expr.operator.lexeme, expr.right);
+    }
+
+    visitAssign(expr: ExprAssign) {
+        throw Error('Method not implemented yet');
+    }
+
+    visitCall(expr: ExprCall) {
+        throw Error('Method not implemented yet');
+    }
+
+    visitExpression(stmt: StmtExpr) {
+        throw Error('Method not implemented yet');
+    }
+
+    visitLogical(expr: ExprLogical) {
+        throw Error('Method not implemented yet');
+    }
+
+    visitSpill(stmt: StmtSpill) {
+        throw Error('Method not implemented yet');
+    }
+
+    visitVariable(expr: ExprVariable) {
+        throw Error('Method not implemented yet');
     }
 
     #parenthesize(name: string, ...exprs: Expr[]) {
