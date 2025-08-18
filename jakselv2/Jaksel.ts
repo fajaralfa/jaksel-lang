@@ -1,4 +1,4 @@
-import { Token, TokenType } from "./Token";
+import { Token, TokenType, type Literal } from "./Token";
 
 export class Jaksel {
     errorReporter: ErrorReporter;
@@ -123,9 +123,27 @@ export class Scanner {
                 this.column = 1;
                 break;
             case '"': this.string(); break;
-            default: this.errorReporter.error(this.line, this.column - 1, "Unexpected character.");
+            default:
+                if (this.isDigit(c)) {
+                    this.number();
+                } else {
+                    this.errorReporter.error(this.line, this.column - 1, `Unexpected character.`);
+                }
+                break;
         }
-        this.column++;
+    }
+
+    private number(): void {
+        while (this.isDigit(this.peek())) {
+            this.advance();
+        }
+        if (this.peek() == '.' && this.isDigit(this.peekNext())) {
+            this.advance();
+            while (this.isDigit(this.peek())) {
+                this.advance();
+            }
+        }
+        this.addToken(TokenType.NUMBER, parseFloat(this.source.substring(this.start, this.current)));
     }
 
     private string(): void {
@@ -167,14 +185,27 @@ export class Scanner {
         return this.source.charAt(this.current);
     }
 
+    private peekNext(): string {
+        if (this.current + 1 >= this.source.length) {
+            return '\0';
+        }
+        return this.source.charAt(this.current + 1);
+    }
+
+    private isDigit(c: string): boolean {
+        return c >= '0' && c <= '9';
+    }
+
     private advance(): string {
+        this.column++;
         return this.source.charAt(this.current++);
     }
 
     private addToken(type: TokenType): void
-    private addToken(type: TokenType, literal: object|string): void
-    private addToken(type: TokenType, literal: object|string|null = null): void {
+    private addToken(type: TokenType, literal: Literal): void
+    private addToken(type: TokenType, literal: Literal = null): void {
         const text = this.source.substring(this.start, this.current);
-        this.tokens.push(new Token(type, text, literal, this.line, this.column));
+        const tokenColumn = this.column - (this.current - this.start); // starting column
+        this.tokens.push(new Token(type, text, literal, this.line, tokenColumn));
     }
 }

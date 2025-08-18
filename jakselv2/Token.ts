@@ -1,10 +1,12 @@
+export type Literal = string | object | number | null
+
 export class Token {
     type: TokenType;
     lexeme: string;
-    literal: string | object | null;
+    literal: Literal;
     line: number;
     column: number;
-    constructor(type: TokenType, lexeme: string, literal: string | object | null, line: number, column: number) {
+    constructor(type: TokenType, lexeme: string, literal: Literal, line: number, column: number) {
         this.type = type;
         this.lexeme = lexeme;
         this.literal = literal;

@@ -40,3 +40,28 @@ test('scan string', () => {
   const result = scanner.scanTokens()[3];
   expect(result).toEqual(expected);
 })
+
+test('scan number', () => {
+  const sources = ['> 123 =', '123.45 +']
+  const expected = [
+    [
+      new Token(TokenType.GREATER, '>', null, 1, 1),
+      new Token(TokenType.NUMBER, '123', 123, 1, 3),
+      new Token(TokenType.EQUAL, '=', null, 1, 7),
+      new Token(TokenType.EOF, '', null, 1, 8),
+    ],
+    [
+      new Token(TokenType.NUMBER, '123.45', 123.45, 1, 1),
+      new Token(TokenType.PLUS, '+', null, 1, 8),
+      new Token(TokenType.EOF, '', null, 1, 9),
+    ],
+  ]
+  const errorRepoter = new ConsoleErrorReporter();
+  for (const i in sources) {
+    const source = sources[i]!
+    const exp = expected[i]!
+    const scanner = new Scanner(errorRepoter, source);
+    const result = scanner.scanTokens();
+    expect(result).toEqual(exp);
+  }
+})
