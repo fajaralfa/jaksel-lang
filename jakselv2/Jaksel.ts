@@ -1,4 +1,4 @@
-import { Token, TokenType, type Literal } from "./Token";
+import { Keywords, Token, TokenType, type Literal } from "./Token";
 
 export class Jaksel {
     errorReporter: ErrorReporter;
@@ -126,11 +126,25 @@ export class Scanner {
             default:
                 if (this.isDigit(c)) {
                     this.number();
+                } else if (this.isAlpha(c)) {
+                    this.identifier();
                 } else {
                     this.errorReporter.error(this.line, this.column - 1, `Unexpected character.`);
                 }
                 break;
         }
+    }
+
+    private identifier(): void {
+        while (this.isAlphaNumeric(this.peek())) {
+            this.advance();
+        }
+        const text = this.source.substring(this.start, this.current);
+        let type = Keywords.get(text);
+        if (type === undefined) {
+            type = TokenType.IDENTIFIER;
+        }
+        this.addToken(type);
     }
 
     private number(): void {
@@ -190,6 +204,14 @@ export class Scanner {
             return '\0';
         }
         return this.source.charAt(this.current + 1);
+    }
+
+    private isAlpha(c: string): boolean {
+        return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c === '_');
+    }
+    
+    private isAlphaNumeric(c: string): boolean {
+        return this.isAlpha(c) || this.isDigit(c);
     }
 
     private isDigit(c: string): boolean {
