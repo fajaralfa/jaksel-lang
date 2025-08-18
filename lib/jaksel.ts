@@ -7,7 +7,7 @@ export class Jaksel {
     private errorReporter: ErrorReporter
 
     constructor() {
-        this.errorReporter = new ErrorReporter();
+        this.errorReporter = new ErrorReporterConsole();
     }
 
     main() {
@@ -66,7 +66,17 @@ export class Jaksel {
     }
 }
 
-export class ErrorReporter {
+interface ErrorReporter {
+    hadError: boolean;
+    hadRuntimeError: boolean;
+    error(line: number, message: string): void
+    error(line: number, column: number, message: string): void
+    error(line: number, columnOrMessage: number|string, message?: string): void
+    parseError(token: Token, message: string): void
+    runtimeError(error: RuntimeError): void
+}
+
+class ErrorReporterConsole implements ErrorReporter {
     hadError = false;
     hadRuntimeError = false;
 
