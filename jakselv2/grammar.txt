@@ -14,7 +14,9 @@ statement         -> exprStmt
                     | block
 exprStmt          -> expression NEWLINE
 forRangeStmt      -> "fomo" expression "endup" expression statement
-ifStmt            -> "kalo" expression statement
+ifStmt            -> "kalo" expression statement elseIfBlock* elseBlock?
+elseIfBlock        -> "perhaps" expression statement
+elseBlock          -> "kalogak" statement
 printStmt         -> "spill" expression NEWLINE
 returnStmt        -> "balikin" expression NEWLINE
 whileStmt         -> "while" (expression) statement
