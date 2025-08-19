@@ -51,6 +51,8 @@ export enum TokenType {
     TRUE,
     FALSE,
     NIL,
+    OR,
+    AND,
 
     FOMO,
     ENDUP,

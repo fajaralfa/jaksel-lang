@@ -1,0 +1,39 @@
+declaration       -> varDecl | constDecl | funcDecl
+varDecl           -> "literally" IDENTIFIER ( "itu" expression )?
+constDecl         -> "seriously" IDENTIFIER ( "itu" expression )?
+funcDecl          -> "so" "about" IDENTIFIER parameters block
+
+parameters        -> IDENTIFIER*
+
+statement         -> exprStmt
+                    | forRangeStmt
+                    | ifStmt
+                    | printStmt
+                    | returnStmt
+                    | whileStmt
+                    | block
+exprStmt          -> expression NEWLINE
+forRangeStmt      -> "fomo" expression "endup" expression statement
+ifStmt            -> "kalo" expression statement
+printStmt         -> "spill" expression NEWLINE
+returnStmt        -> "balikin" expression NEWLINE
+whileStmt         -> "while" (expression) statement
+block             -> NEWLINE statement* "udahan"
+
+expression        -> assignment
+assignment        -> IDENTIFIER "itu" assignment | logic_or
+logic_or          -> logic_and ("or" logic_and)*
+logic_and         -> equality ("and" equality)*
+equality          -> comparison ( ( "!=" | "==" ) comparison)*
+comparison        -> term ( ( ">" | ">=" | "<" | "<=" ) term)*
+term              -> factor ( ( "-" | "+" ) factor )*
+factor            -> unary ( ( "/" | "*" ) unary)*
+unary             -> ( "!" | "-" ) unary | call
+call              -> "call" IDENTIFIER expression*
+primary           -> "true" | "false" | "nil" | NUMBER | STRING | IDENTIFIER | "(" expression ")"
+
+NUMBER            -> DIGIT+ ("." DIGIT+)?
+STRING            -> "\"" <any char except "\"">* "\""
+IDENTIFIER        -> ALPHA ( ALPHA | DIGIT )*
+ALPHA             -> "a"..."z" | "A...Z" | "_"
+DIGIT             -> "0"..."9"
