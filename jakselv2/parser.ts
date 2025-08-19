@@ -1,55 +1,6 @@
 import { ParseError, type ErrorReporter } from "./error";
-import { Token, TokenType, type Literal as LiteralType } from "./token";
-
-interface Expr {
-    accept<T>(visitor: VisitorExpr<T>): T;
-}
-
-interface VisitorExpr<T> {
-    visitBinary(expr: Binary): T
-    visitGrouping(expr: Grouping): T
-    visitLiteral(expr: Literal): T
-    visitUnary(expr: Unary): T
-}
-
-class Binary implements Expr {
-    constructor(
-        public left: Expr,
-        public operator: Token,
-        public right: Expr
-    ) {}
-    accept<T>(visitor: VisitorExpr<T>): T {
-        return visitor.visitBinary(this);
-    }
-}
-
-class Grouping implements Expr {
-    constructor(
-        public expression: Expr
-    ) {}
-    accept<T>(visitor: VisitorExpr<T>): T {
-        return visitor.visitGrouping(this);
-    }
-}
-
-class Literal implements Expr {
-    constructor(
-        public value: LiteralType
-    ) {}
-    accept<T>(visitor: VisitorExpr<T>): T {
-        return visitor.visitLiteral(this);
-    }
-}
-
-class Unary implements Expr {
-    constructor(
-        public operator: Token,
-        public right: Expr
-    ) {}
-    accept<T>(visitor: VisitorExpr<T>): T {
-        return visitor.visitUnary(this);
-    }
-}
+import { Token, TokenType } from "./token";
+import { type Expr, Binary, Unary, Grouping, Literal } from './ast'
 
 export class Parser {
     private current: number = 0
@@ -60,10 +11,16 @@ export class Parser {
 
     parse(): Expr|null {
         try {
-            return this.expression();
+            return this.exprStmt();
         } catch (err) {
             return null;
         }
+    }
+
+    private exprStmt(): Expr | null {
+        const expr = this.expression();
+        this.consume(TokenType.NEWLINE, "Expect newline after expression.");
+        return expr;
     }
 
     private expression(): Expr {
