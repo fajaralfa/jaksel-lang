@@ -2,7 +2,8 @@ import fs from "node:fs";
 import { argv, exit } from "node:process";
 import readline from "node:readline";
 import process from "node:process";
-import { ConsoleErrorReporter, Jaksel } from "./Jaksel";
+import { Jaksel } from "./jaksel";
+import { ConsoleErrorReporter } from "./error";
 
 function main() {
     const errorReporter = new ConsoleErrorReporter();

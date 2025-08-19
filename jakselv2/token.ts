@@ -71,29 +71,3 @@ export enum TokenType {
     OVERTHINKING,
     CALL,
 }
-
-export const Keywords = new Map([
-    ['true', TokenType.TRUE],
-    ['false', TokenType.FALSE],
-    ['nil', TokenType.NIL],
-
-    ['fomo', TokenType.FOMO],
-    ['endup', TokenType.ENDUP],
-
-    ['thats', TokenType.THATS],
-    ['it', TokenType.IT],
-    ['sih', TokenType.SIH],
-
-    ['spill', TokenType.SPILL],
-
-    ['literally', TokenType.LITERALLY],
-    ['seriously', TokenType.SERIOUSLY],
-    ['whichis', TokenType.WHICHIS],
-    ['itu', TokenType.ITU],
-
-    ['so', TokenType.SO],
-    ['about', TokenType.ABOUT],
-    ['overthinking', TokenType.OVERTHINKING],
-    ['call', TokenType.CALL],
-
-])

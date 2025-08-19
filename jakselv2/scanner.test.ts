@@ -1,6 +1,7 @@
 import { expect, test } from 'bun:test'
-import { Token, TokenType } from './Token'
-import { ConsoleErrorReporter, Scanner } from './Jaksel'
+import { Token, TokenType } from './token'
+import { Scanner } from './scanner'
+import { ConsoleErrorReporter } from './error'
 
 test('scan symbols', () => {
   const source = '(),.-+*/!!===>=<==\n><\t# komentar\r\n "Fajar \n Alfa"'

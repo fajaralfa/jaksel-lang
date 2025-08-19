@@ -1,61 +1,5 @@
-import { Keywords, Token, TokenType, type Literal } from "./Token";
-
-export class Jaksel {
-    errorReporter: ErrorReporter;
-    constructor(errorReporter: ErrorReporter) {
-        this.errorReporter = errorReporter;
-    }
-
-    run(source: string) {
-        const scanner: Scanner = new Scanner(this.errorReporter, source);
-        const tokens: Array<Token> = scanner.scanTokens();
-        for (const token of tokens) {
-            console.log(token.toString());
-        }
-    }
-}
-
-export interface ErrorReporter {
-    hadError: boolean;
-    hadRuntimeError: boolean;
-    error(line: number, message: string): void;
-    error(line: number, column: number, message: string): void;
-    error(line: number, columnOrMessage: number | string, message?: string): void;
-}
-
-export class ConsoleErrorReporter implements ErrorReporter {
-    hadError: boolean = false;
-    hadRuntimeError: boolean = false;
-
-    error(line: number, message: string): void;
-    error(line: number, column: number, message: string): void;
-    error(line: number, columnOrMessage: number | string, message?: string): void {
-        if (typeof columnOrMessage === 'string') {
-            this.report(line, null, "", columnOrMessage);
-        } else {
-            this.report(line, columnOrMessage, "", message);
-        }
-    }
-
-    private report(line: number, column: number|null, where: string, message?: string) {
-        if (column === null) {
-            console.error(`[ln ${line}] Error ${where}: ${message}`);
-        } else {
-            console.error(`[ln ${line}, col ${column}] Error ${where}: ${message}`);
-        }
-        this.hadError = true;
-    }
-
-}
-
-export class RuntimeError extends Error {
-    token: Token;
-
-    constructor(token: Token, message: string) {
-        super(message);
-        this.token = token;
-    }
-}
+import type { ErrorReporter } from "./error";
+import { Token, TokenType, type Literal } from "./token";
 
 export class Scanner {
     private source: string;
@@ -231,3 +175,29 @@ export class Scanner {
         this.tokens.push(new Token(type, text, literal, this.line, tokenColumn));
     }
 }
+
+const Keywords = new Map([
+    ['true', TokenType.TRUE],
+    ['false', TokenType.FALSE],
+    ['nil', TokenType.NIL],
+
+    ['fomo', TokenType.FOMO],
+    ['endup', TokenType.ENDUP],
+
+    ['thats', TokenType.THATS],
+    ['it', TokenType.IT],
+    ['sih', TokenType.SIH],
+
+    ['spill', TokenType.SPILL],
+
+    ['literally', TokenType.LITERALLY],
+    ['seriously', TokenType.SERIOUSLY],
+    ['whichis', TokenType.WHICHIS],
+    ['itu', TokenType.ITU],
+
+    ['so', TokenType.SO],
+    ['about', TokenType.ABOUT],
+    ['overthinking', TokenType.OVERTHINKING],
+    ['call', TokenType.CALL],
+
+])
