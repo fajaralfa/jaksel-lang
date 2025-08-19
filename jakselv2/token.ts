@@ -1,4 +1,4 @@
-export type Literal = string | object | number | null
+export type Literal = string | object | number | boolean | null
 
 export class Token {
     type: TokenType;

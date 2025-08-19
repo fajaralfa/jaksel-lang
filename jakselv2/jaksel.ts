@@ -1,4 +1,5 @@
 import type { ErrorReporter } from "./error";
+import { Parser } from "./parser";
 import { Scanner } from "./scanner";
 import { Token } from "./token";
 
@@ -9,10 +10,13 @@ export class Jaksel {
     }
 
     run(source: string) {
-        const scanner: Scanner = new Scanner(this.errorReporter, source);
+        const scanner = new Scanner(this.errorReporter, source);
         const tokens: Array<Token> = scanner.scanTokens();
-        for (const token of tokens) {
-            console.log(token.toString());
+        const parser = new Parser(this.errorReporter, tokens);
+        const expression = parser.parse();
+        if (this.errorReporter.hadError) {
+            return;
         }
+        console.log(expression);
     }
 }
