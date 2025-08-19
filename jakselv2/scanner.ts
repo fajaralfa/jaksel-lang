@@ -177,9 +177,9 @@ export class Scanner {
 }
 
 const Keywords = new Map([
-    ['true', TokenType.TRUE],
-    ['false', TokenType.FALSE],
-    ['nil', TokenType.NIL],
+    ['ril', TokenType.TRUE],
+    ['impossible', TokenType.FALSE],
+    ['hampa', TokenType.NIL],
 
     ['fomo', TokenType.FOMO],
     ['endup', TokenType.ENDUP],
