@@ -11,16 +11,10 @@ export class Parser {
 
     parse(): Expr|null {
         try {
-            return this.exprStmt();
+            return this.expression();
         } catch (err) {
             return null;
         }
-    }
-
-    private exprStmt(): Expr | null {
-        const expr = this.expression();
-        this.consume(TokenType.NEWLINE, "Expect newline after expression.");
-        return expr;
     }
 
     private expression(): Expr {

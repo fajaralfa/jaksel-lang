@@ -7,6 +7,7 @@ export interface ErrorReporter {
     error(line: number, message: string): void;
     error(line: number, column: number, message: string): void;
     error(line: number, columnOrMessage: number | string, message?: string): void;
+    runtimeError(err: RuntimeError): void;
 }
 
 export class ConsoleErrorReporter implements ErrorReporter {
@@ -34,6 +35,12 @@ export class ConsoleErrorReporter implements ErrorReporter {
         } else {
             throw new Error('Invalid arguments');
         }
+    }
+
+    runtimeError(err: RuntimeError): void {
+        console.error(err.message);
+        console.error(`[ln ${err.token.line}, col ${err.token.column}]`);
+        this.hadRuntimeError = true;
     }
 
     private report(line: number, column: number|null, where: string, message?: string) {
