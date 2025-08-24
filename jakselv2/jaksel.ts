@@ -14,9 +14,9 @@ export class Jaksel {
         const scanner = new Scanner(this.errorReporter, source);
         const tokens: Array<Token> = scanner.scanTokens();
         const parser = new Parser(this.errorReporter, tokens);
-        const expression = parser.parse();
+        const statements = parser.parse();
         const interpreter = new Interpreter(this.errorReporter);
-        interpreter.intepret(expression);
+        interpreter.intepret(statements);
         if (this.errorReporter.hadError) {
             return;
         }

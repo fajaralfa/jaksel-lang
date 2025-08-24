@@ -1,13 +1,14 @@
-import type { Binary, Expr, Grouping, Literal, Unary, VisitorExpr } from "./ast";
+import type { Binary, Expr, Expression, Grouping, Literal, Print, Stmt, Unary, VisitorExpr, VisitorStmt } from "./ast";
 import { RuntimeError, type ErrorReporter } from "./error";
 import { Token, TokenType } from "./token";
 
-export class Interpreter implements VisitorExpr<any> {
+export class Interpreter implements VisitorExpr<any>, VisitorStmt<void> {
     constructor(public errorReporter: ErrorReporter) {}
-    intepret(expression: Expr | null): void {
+    intepret(statements: Array<Stmt>): void {
         try {
-            const value = this.evaluate(expression);
-            console.log(value);
+            for (const s of statements) {
+                this.execute(s);
+            }
         } catch (err) {
             this.errorReporter.runtimeError(err as RuntimeError);
         }
@@ -80,6 +81,16 @@ export class Interpreter implements VisitorExpr<any> {
     }
     private evaluate(expr: Expr | null): any {
         return expr?.accept(this);
+    }
+    private execute(stmt: Stmt): void {
+        stmt.accept(this);
+    }
+    visitExpression(stmt: Expression): void {
+        this.evaluate(stmt.expression);
+    }
+    visitPrint(stmt: Print): void {
+        const value = this.evaluate(stmt.expression);
+        console.log(value);
     }
     private isTruthy(obj: any) {
         if (obj === null) {

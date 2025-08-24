@@ -1,6 +1,6 @@
 import { ParseError, type ErrorReporter } from "./error";
 import { Token, TokenType } from "./token";
-import { type Expr, Binary, Unary, Grouping, Literal } from './ast'
+import { type Expr, Binary, Unary, Grouping, Literal, type Stmt, Print, Expression } from './ast'
 
 export class Parser {
     private current: number = 0
@@ -9,16 +9,33 @@ export class Parser {
         private tokens: Array<Token>,
     ) {}
 
-    parse(): Expr|null {
-        try {
-            return this.expression();
-        } catch (err) {
-            return null;
+    parse(): Array<Stmt> {
+        const statements: Array<Stmt> = [];
+        while (!this.isAtEnd()) {
+            statements.push(this.statement());
         }
+        return statements;
     }
 
     private expression(): Expr {
         return this.equality();
+    }
+
+    private statement(): Stmt {
+        if (this.match(TokenType.SPILL)) return this.spillStatement();
+        return this.expressionStatement();
+    }
+
+    private spillStatement(): Stmt {
+        const value = this.expression();
+        this.consume([TokenType.NEWLINE, TokenType.EOF], "Expect newline after value.");
+        return new Print(value);
+    }
+
+    private expressionStatement(): Stmt {
+        const expr = this.expression();
+        this.consume([TokenType.NEWLINE, TokenType.EOF], "Expect newline after expression.");
+        return new Expression(expr);
     }
 
     private equality(): Expr {
@@ -101,9 +118,17 @@ export class Parser {
         return false;
     }
 
-    private consume(type: TokenType, message: string) {
-        if (this.check(type)) {
-            return this.advance();
+    private consume(types: TokenType | Array<TokenType>, message: string) {
+        if (Array.isArray(types)) {
+            for (const type of types) {
+                if ((this.isAtEnd() && type === TokenType.EOF) || this.check(type)) {
+                    return this.advance();
+                }
+            }
+        } else {
+            if (this.check(types)) {
+                return this.advance();
+            }
         }
         throw this.error(this.peek(), message);
     }

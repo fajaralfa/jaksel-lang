@@ -1,3 +1,5 @@
+PROGRAM           -> statement* EOF
+
 declaration       -> varDecl | constDecl | funcDecl
 varDecl           -> "literally" IDENTIFIER ( "itu" expression )?
 constDecl         -> "seriously" IDENTIFIER ( "itu" expression )?
