@@ -1,8 +1,8 @@
-PROGRAM           -> statement* EOF
+PROGRAM           -> declaration* EOF
 
-declaration       -> varDecl | constDecl | funcDecl
+declaration       -> varDecl | constDecl | funcDecl | statement
 varDecl           -> "literally" IDENTIFIER ( "itu" expression )?
-constDecl         -> "seriously" IDENTIFIER ( "itu" expression )?
+constDecl         -> "seriously" IDENTIFIER ( "itu" expression )
 funcDecl          -> "so" "about" IDENTIFIER parameters block
 
 parameters        -> IDENTIFIER*

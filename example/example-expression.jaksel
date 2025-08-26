@@ -1,2 +1,5 @@
-spill 1 + 2
-spill "fajar"
+literally age itu 2 + 5 + 10
+literally name itu "pipel"
+spill name
+spill age
+spill 2 + 5 / 2

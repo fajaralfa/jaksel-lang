@@ -1,8 +1,11 @@
-import type { Binary, Expr, Expression, Grouping, Literal, Print, Stmt, Unary, VisitorExpr, VisitorStmt } from "./ast";
+import type { Binary, Expr, Expression, Grouping, Literal, Print, Stmt, Unary, Var, Variable, VisitorExpr, VisitorStmt } from "./ast";
+import { Environment } from "./environment";
 import { RuntimeError, type ErrorReporter } from "./error";
 import { Token, TokenType } from "./token";
 
 export class Interpreter implements VisitorExpr<any>, VisitorStmt<void> {
+    private environment: Environment = new Environment();
+
     constructor(public errorReporter: ErrorReporter) {}
     intepret(statements: Array<Stmt>): void {
         try {
@@ -91,6 +94,16 @@ export class Interpreter implements VisitorExpr<any>, VisitorStmt<void> {
     visitPrint(stmt: Print): void {
         const value = this.evaluate(stmt.expression);
         console.log(value);
+    }
+    visitVar(stmt: Var): void {
+        let value = null;
+        if (stmt.initializer !== null) {
+            value = this.evaluate(stmt.initializer);
+        }
+        this.environment.define(stmt.name.lexeme, value);
+    }
+    visitVariable(expr: Variable) {
+        return this.environment.get(expr.name);
     }
     private isTruthy(obj: any) {
         if (obj === null) {

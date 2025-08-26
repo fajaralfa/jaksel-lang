@@ -1,6 +1,6 @@
 import { ParseError, type ErrorReporter } from "./error";
 import { Token, TokenType } from "./token";
-import { type Expr, Binary, Unary, Grouping, Literal, type Stmt, Print, Expression } from './ast'
+import { type Expr, Binary, Unary, Grouping, Literal, type Stmt, Print, Expression, Var, Variable } from './ast'
 
 export class Parser {
     private current: number = 0
@@ -9,16 +9,29 @@ export class Parser {
         private tokens: Array<Token>,
     ) {}
 
-    parse(): Array<Stmt> {
-        const statements: Array<Stmt> = [];
+    parse(): Array<Stmt | null> {
+        const statements: Array<Stmt | null> = [];
         while (!this.isAtEnd()) {
-            statements.push(this.statement());
+            statements.push(this.declaration());
         }
         return statements;
     }
 
     private expression(): Expr {
         return this.equality();
+    }
+
+    private declaration(): Stmt | null {
+        try {
+            if (this.match(TokenType.LITERALLY)) return this.varDeclaration();
+            return this.statement();
+        } catch (err) {
+            if (err instanceof ParseError) {
+                this.synchronize();
+                return null;
+            }
+            throw err;
+        }
     }
 
     private statement(): Stmt {
@@ -30,6 +43,16 @@ export class Parser {
         const value = this.expression();
         this.consume([TokenType.NEWLINE, TokenType.EOF], "Expect newline after value.");
         return new Print(value);
+    }
+
+    private varDeclaration(): Stmt {
+        const name = this.consume(TokenType.IDENTIFIER, "Expect variable name.");
+        let initializer = null;
+        if (this.match(TokenType.ITU)) {
+            initializer = this.expression();
+        }
+        this.consume(TokenType.NEWLINE, "Expect newline after variable declaration.");
+        return new Var(name, initializer);
     }
 
     private expressionStatement(): Stmt {
@@ -99,6 +122,9 @@ export class Parser {
         }
         if (this.match(TokenType.NUMBER, TokenType.STRING)) {
             return new Literal(this.previous().literal)
+        }
+        if (this.match(TokenType.IDENTIFIER)) {
+            return new Variable(this.previous());
         }
         if (this.match(TokenType.LEFT_PAREN)) {
             const expr = this.expression();

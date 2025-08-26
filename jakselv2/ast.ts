@@ -9,6 +9,7 @@ export interface VisitorExpr<T> {
     visitGrouping(expr: Grouping): T;
     visitLiteral(expr: Literal): T;
     visitUnary(expr: Unary): T;
+    visitVariable(expr: Variable): T;
 }
 
 export class Binary implements Expr {
@@ -39,6 +40,13 @@ export class Unary implements Expr {
     }
 }
 
+export class Variable implements Expr {
+    constructor(public name: Token) {}
+    accept<T>(visitor: VisitorExpr<T>): T {
+        return visitor.visitVariable(this);
+    }
+}
+
 export interface Stmt {
     accept<T>(visitor: VisitorStmt<T>): T;
 }
@@ -46,6 +54,7 @@ export interface Stmt {
 export interface VisitorStmt<T> {
     visitExpression(stmt: Expression): T;
     visitPrint(stmt: Print): T;
+    visitVar(stmt: Var): T;
 }
 
 export class Expression implements Stmt {
@@ -59,5 +68,12 @@ export class Print implements Stmt {
     constructor(public expression: Expr) {}
     accept<T>(visitor: VisitorStmt<T>): T {
         return visitor.visitPrint(this);
+    }
+}
+
+export class Var implements Stmt {
+    constructor(public name: Token, public initializer: Expr | null) { }
+    accept<T>(visitor: VisitorStmt<T>): T {
+        return visitor.visitVar(this);
     }
 }
