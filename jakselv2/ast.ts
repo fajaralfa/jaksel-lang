@@ -10,6 +10,7 @@ export interface VisitorExpr<T> {
     visitLiteral(expr: Literal): T;
     visitUnary(expr: Unary): T;
     visitVariable(expr: Variable): T;
+    visitAssign(expr: Assign): T;
 }
 
 export class Binary implements Expr {
@@ -44,6 +45,13 @@ export class Variable implements Expr {
     constructor(public name: Token) {}
     accept<T>(visitor: VisitorExpr<T>): T {
         return visitor.visitVariable(this);
+    }
+}
+
+export class Assign implements Expr {
+    constructor(public name: Token, public value: Expr) {}
+    accept<T>(visitor: VisitorExpr<T>): T {
+        return visitor.visitAssign(this);
     }
 }
 

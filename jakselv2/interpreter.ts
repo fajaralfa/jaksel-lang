@@ -1,4 +1,4 @@
-import type { Binary, Expr, Expression, Grouping, Literal, Print, Stmt, Unary, Var, Variable, VisitorExpr, VisitorStmt } from "./ast";
+import type { Assign, Binary, Expr, Expression, Grouping, Literal, Print, Stmt, Unary, Var, Variable, VisitorExpr, VisitorStmt } from "./ast";
 import { Environment } from "./environment";
 import { RuntimeError, type ErrorReporter } from "./error";
 import { Token, TokenType } from "./token";
@@ -101,6 +101,11 @@ export class Interpreter implements VisitorExpr<any>, VisitorStmt<void> {
             value = this.evaluate(stmt.initializer);
         }
         this.environment.define(stmt.name.lexeme, value);
+    }
+    visitAssign(expr: Assign) {
+        const value = this.evaluate(expr.value);
+        this.environment.assign(expr.name, value);
+        return value;
     }
     visitVariable(expr: Variable) {
         return this.environment.get(expr.name);

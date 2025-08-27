@@ -1,6 +1,6 @@
 import { ParseError, type ErrorReporter } from "./error";
 import { Token, TokenType } from "./token";
-import { type Expr, Binary, Unary, Grouping, Literal, type Stmt, Print, Expression, Var, Variable } from './ast'
+import { type Expr, Binary, Unary, Grouping, Literal, type Stmt, Print, Expression, Var, Variable, Assign } from './ast'
 
 export class Parser {
     private current: number = 0
@@ -18,7 +18,7 @@ export class Parser {
     }
 
     private expression(): Expr {
-        return this.equality();
+        return this.assignment();
     }
 
     private declaration(): Stmt | null {
@@ -59,6 +59,22 @@ export class Parser {
         const expr = this.expression();
         this.consume([TokenType.NEWLINE, TokenType.EOF], "Expect newline after expression.");
         return new Expression(expr);
+    }
+
+    private assignment(): Expr {
+        const expr = this.equality();
+        if (this.match(TokenType.ITU)) {
+            const equals = this.previous();
+            const value = this.assignment();
+            if (expr instanceof Variable) {
+                const name = expr.name;
+                return new Assign(name, value);
+            }
+
+            this.error(equals, "Invalid assignment target.");
+        }
+
+        return expr;
     }
 
     private equality(): Expr {
