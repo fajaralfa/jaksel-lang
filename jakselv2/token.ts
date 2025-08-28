@@ -63,6 +63,11 @@ export enum TokenType {
 
     SPILL,
 
+    KALO,
+    PERHAPS,
+    KALOGAK,
+    UDAHAN,
+
     LITERALLY,
     SERIOUSLY,
     WHICHIS,

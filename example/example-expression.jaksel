@@ -1,7 +1,11 @@
 literally age itu 2 + 5 + 10
-literally name itu "pipel"
-spill name
-name itu "anjay"
-spill name
-spill age
-spill 2 + 5 / 2
+kalo 2 == 1
+  spill "a"
+perhaps 2 == 4
+  spill "b"
+perhaps 3 == 4
+  spill "c"
+kalogak
+  spill "anjay"
+  spill "lagi"
+udahan

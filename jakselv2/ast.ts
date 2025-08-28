@@ -63,6 +63,7 @@ export interface VisitorStmt<T> {
     visitExpression(stmt: Expression): T;
     visitPrint(stmt: Print): T;
     visitVar(stmt: Var): T;
+    visitIf(stmt: If): T;
 }
 
 export class Expression implements Stmt {
@@ -83,5 +84,17 @@ export class Var implements Stmt {
     constructor(public name: Token, public initializer: Expr | null) { }
     accept<T>(visitor: VisitorStmt<T>): T {
         return visitor.visitVar(this);
+    }
+}
+
+export class If implements Stmt {
+    constructor(
+        public condition: Expr,
+        public thenBranch: Stmt[],
+        public elseBranch: Stmt[] | null = null,
+        public elseIfBlocks: If[] = []
+    ) {}
+    accept<T>(visitor: VisitorStmt<T>): T {
+        return visitor.visitIf(this);
     }
 }

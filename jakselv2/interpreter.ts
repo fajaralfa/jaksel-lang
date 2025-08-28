@@ -1,4 +1,4 @@
-import type { Assign, Binary, Expr, Expression, Grouping, Literal, Print, Stmt, Unary, Var, Variable, VisitorExpr, VisitorStmt } from "./ast";
+import type { Assign, Binary, Expr, Expression, Grouping, If, Literal, Print, Stmt, Unary, Var, Variable, VisitorExpr, VisitorStmt } from "./ast";
 import { Environment } from "./environment";
 import { RuntimeError, type ErrorReporter } from "./error";
 import { Token, TokenType } from "./token";
@@ -7,10 +7,12 @@ export class Interpreter implements VisitorExpr<any>, VisitorStmt<void> {
     private environment: Environment = new Environment();
 
     constructor(public errorReporter: ErrorReporter) {}
-    intepret(statements: Array<Stmt>): void {
+    intepret(statements: Array<Stmt | null>): void {
         try {
             for (const s of statements) {
-                this.execute(s);
+                if (s != null) {
+                    this.execute(s);
+                }
             }
         } catch (err) {
             this.errorReporter.runtimeError(err as RuntimeError);
@@ -91,6 +93,36 @@ export class Interpreter implements VisitorExpr<any>, VisitorStmt<void> {
     visitExpression(stmt: Expression): void {
         this.evaluate(stmt.expression);
     }
+    visitIf(stmt: If): void {
+        if (this.isTruthy(this.evaluate(stmt.condition))) {
+            this.executeBlock(stmt.thenBranch, this.environment);
+            return;
+        }
+        if (stmt.elseIfBlocks != null) {
+            for (const elseIfBlock of stmt.elseIfBlocks) {
+                if (this.isTruthy(this.evaluate(elseIfBlock.condition))) {
+                    this.executeBlock(elseIfBlock.thenBranch, this.environment);
+                    return;
+                }
+            }
+        }
+        if (stmt.elseBranch != null) {
+            this.executeBlock(stmt.elseBranch, this.environment);
+        }
+    }
+
+    private executeBlock(statements: Stmt[], environment: Environment): void {
+        const previous = this.environment;
+        this.environment = environment;
+        try {
+            for (const stmt of statements) {
+                this.execute(stmt);
+            }
+        } finally {
+            this.environment = previous;
+        }
+    }
+
     visitPrint(stmt: Print): void {
         const value = this.evaluate(stmt.expression);
         console.log(value);

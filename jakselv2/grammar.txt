@@ -2,10 +2,10 @@ PROGRAM           -> declaration* EOF
 
 declaration       -> varDecl | constDecl | funcDecl | statement
 varDecl           -> "literally" IDENTIFIER ( "itu" expression )?
-constDecl         -> "seriously" IDENTIFIER ( "itu" expression )
-funcDecl          -> "so" "about" IDENTIFIER parameters block
+constDecl         -> "seriously" IDENTIFIER "itu" expression
+funcDecl          -> "so" "about" IDENTIFIER parameters openblock "udahan"
 
-parameters        -> IDENTIFIER*
+parameters        -> (IDENTIFIER ("," IDENTIFIER)*)?
 
 statement         -> exprStmt
                     | forRangeStmt
@@ -13,16 +13,15 @@ statement         -> exprStmt
                     | printStmt
                     | returnStmt
                     | whileStmt
-                    | block
 exprStmt          -> expression NEWLINE
-forRangeStmt      -> "fomo" expression "endup" expression statement
-ifStmt            -> "kalo" expression statement elseIfBlock* elseBlock?
-elseIfBlock        -> "perhaps" expression statement
-elseBlock          -> "kalogak" statement
+forRangeStmt      -> "fomo" expression "endup" expression openblock "udahan"
+ifStmt            -> "kalo" expression openblock (elseIfBlock* elseBlock?)? "udahan"
+elseIfBlock        -> "perhaps" expression openblock
+elseBlock          -> "kalogak" openblock
 printStmt         -> "spill" expression NEWLINE
 returnStmt        -> "balikin" expression NEWLINE
-whileStmt         -> "while" (expression) statement
-block             -> NEWLINE statement* "udahan"
+whileStmt         -> "while" expression openblock "udahan"
+openblock         -> NEWLINE statement*
 
 expression        -> assignment
 assignment        -> IDENTIFIER "itu" assignment | logic_or

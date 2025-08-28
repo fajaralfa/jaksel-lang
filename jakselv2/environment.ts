@@ -3,10 +3,14 @@ import type { Literal, Token } from "./token";
 
 export class Environment {
     public values: Map<string, Literal> = new Map();
-    get(name: Token) {
+
+    constructor(public enclosing: Environment | null = null) {}
+
+    get(name: Token): Literal | undefined {
         if (this.values.has(name.lexeme)) {
             return this.values.get(name.lexeme);
         }
+        if (this.enclosing != null) return this.enclosing.get(name);
         throw new RuntimeError(name, `Undefined variable ${name.lexeme}.`)
     }
 
@@ -19,7 +23,9 @@ export class Environment {
             this.values.set(name.lexeme, value);
             return;
         }
-
+        if (this.enclosing != null) {
+            this.enclosing.assign(name, value);
+        }
         throw new RuntimeError(name, `Undefined variable '${name.lexeme}'.`)
     }
 }

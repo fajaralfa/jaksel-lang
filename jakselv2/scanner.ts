@@ -195,6 +195,11 @@ const Keywords = new Map([
     ['whichis', TokenType.WHICHIS],
     ['itu', TokenType.ITU],
 
+    ['kalo', TokenType.KALO],
+    ['perhaps', TokenType.PERHAPS],
+    ['kalogak', TokenType.KALOGAK],
+    ['udahan', TokenType.UDAHAN],
+
     ['so', TokenType.SO],
     ['about', TokenType.ABOUT],
     ['overthinking', TokenType.OVERTHINKING],

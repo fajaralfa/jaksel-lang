@@ -1,6 +1,6 @@
 import { ParseError, type ErrorReporter } from "./error";
 import { Token, TokenType } from "./token";
-import { type Expr, Binary, Unary, Grouping, Literal, type Stmt, Print, Expression, Var, Variable, Assign } from './ast'
+import { type Expr, Binary, Unary, Grouping, Literal, type Stmt, Print, Expression, Var, Variable, Assign, If } from './ast'
 
 export class Parser {
     private current: number = 0
@@ -12,6 +12,7 @@ export class Parser {
     parse(): Array<Stmt | null> {
         const statements: Array<Stmt | null> = [];
         while (!this.isAtEnd()) {
+            if (this.match(TokenType.NEWLINE)) continue;
             statements.push(this.declaration());
         }
         return statements;
@@ -35,8 +36,49 @@ export class Parser {
     }
 
     private statement(): Stmt {
+        if (this.match(TokenType.KALO)) return this.ifStatement();
         if (this.match(TokenType.SPILL)) return this.spillStatement();
         return this.expressionStatement();
+    }
+
+    private ifStatement(): Stmt {
+        const condition = this.expression();
+
+        const thenBranch = this.openblock();
+
+        // 3. Optionally parse elseIfBlocks
+        const elseIfBlocks: If[] = [];
+        while (this.match(TokenType.PERHAPS)) {
+            const elseIfCondition = this.expression();
+            const elseIfBranch = this.openblock();
+            elseIfBlocks.push(new If(elseIfCondition, elseIfBranch, null));  // Handle else-if block
+        }
+
+        // 4. Optionally parse elseBlock
+        let elseBranch: Stmt[] | null = null;
+        if (this.match(TokenType.KALOGAK)) {
+            elseBranch = this.openblock();
+        }
+
+        // 5. Ensure we end with 'udahan'
+        this.consume(TokenType.UDAHAN, "Expect 'udahan' after if statement.");
+
+        return new If(condition, thenBranch, elseBranch, elseIfBlocks);
+    }
+
+    private openblock(): Stmt[] {
+        const statements: Stmt[] = [];
+        this.consume(TokenType.NEWLINE, "Expect newline before block.");
+        while (
+            !this.isAtEnd() &&
+            this.peek().type !== TokenType.UDAHAN &&
+            this.peek().type !== TokenType.PERHAPS &&
+            this.peek().type !== TokenType.KALOGAK
+        ) {
+            if (this.match(TokenType.NEWLINE)) continue;
+            statements.push(this.statement());
+        }
+        return statements;
     }
 
     private spillStatement(): Stmt {
@@ -181,20 +223,17 @@ export class Parser {
     }
 
     private synchronize(): void {
-        this.advance();
         while (!this.isAtEnd()) {
-            if (this.previous().type === TokenType.NEWLINE) {
-                return;
-            }
             switch (this.peek().type) {
                 case TokenType.NEWLINE:
                 case TokenType.FOMO:
                 case TokenType.SPILL:
                 case TokenType.SO:
+                case TokenType.KALO:
                     return;
             }
+            this.advance();
         }
-        this.advance();
     }
 
     private check(type: TokenType): boolean {
